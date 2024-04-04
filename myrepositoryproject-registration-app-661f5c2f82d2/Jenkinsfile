@@ -1,0 +1,148 @@
+pipeline {
+    agent any
+    tools {
+        maven 'maven'
+    }
+    environment {
+        SCANNER_HOME = tool 'sonar-qube'
+        APP_NAME = "java-registration-app"
+        RELEASE = "1.0.0"
+        DOCKER_USER = "kishoretk12"
+        DOCKER_PASS = 'docker-hub'
+        IMAGE_NAME = "${DOCKER_USER}" + "/" + "${APP_NAME}"
+        IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
+    }
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'main', url: 'https://kishoretk12@bitbucket.org/myrepositoryproject/registration-app.git'
+            }
+        }
+        stage('Build Package') {
+            steps {
+                dir('webapp') {
+                    sh "mvn package"
+                }
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-id') {
+                    dir('webapp') {
+                        sh 'mvn -U clean install sonar:sonar'
+                    }
+                }
+            }
+        }
+        stage("Quality Gate") {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-id'
+                }
+            }
+        }
+        stage('Artifactory Configuration') {
+            steps {
+                rtServer(
+                    id: "jfrog-server",
+                    url: "http://172.31.15.75:8082/artifactory",
+                    credentialsId: "jfrog-id"
+                )
+
+                rtMavenDeployer(
+                    id: "MAVEN_DEPLOYER",
+                    serverId: "jfrog-server",
+                    releaseRepo: "libs-release-local",
+                    snapshotRepo: "libs-snapshot-local"
+                )
+
+                rtMavenResolver(
+                    id: "MAVEN_RESOLVER",
+                    serverId: "jfrog-server",
+                    releaseRepo: "libs-release",
+                    snapshotRepo: "libs-snapshot"
+                )
+            }
+        }
+        stage('Deploy Artifacts') {
+            steps {
+                rtMavenRun(
+                    tool: "maven", 
+                    pom: 'webapp/pom.xml',
+                    goals: 'clean install',
+                    deployerId: "MAVEN_DEPLOYER",
+                    resolverId: "MAVEN_RESOLVER"
+                )
+            }
+        }
+        stage('Publish Build Info') {
+            steps {
+                rtPublishBuildInfo(
+                    serverId: "jfrog-server"
+                )
+            }
+        }
+        stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+        stage("Build & Push Docker Image") {
+            steps {
+                script {
+                    docker.withRegistry('', DOCKER_PASS) {
+                        docker_image = docker.build "${IMAGE_NAME}"
+                    }
+                    docker.withRegistry('', DOCKER_PASS) {
+                        docker_image.push("${IMAGE_TAG}")
+                        docker_image.push('latest')
+                    }
+                }
+            }
+        }
+        stage("Trivy Image Scan") {
+            steps {
+                script {
+                    sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image kishoretk12/java-registration-app:latest --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table > trivyimage.txt')
+                }
+            }
+        }
+        stage('Cleanup Artifacts') {
+            steps {
+                script {
+                    sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG}"
+                    sh "docker rmi ${IMAGE_NAME}:latest"
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    dir('Kubernetes') {
+                        kubeconfig(credentialsId: 'kubernetes', serverUrl: '') {
+                            sh 'kubectl apply -f deployment.yml'
+                            sh 'kubectl apply -f service.yml'
+                            sh 'kubectl rollout restart deployment.apps/registerapp-deployment'
+                        }   
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            emailext attachLog: true,
+                subject: "'${currentBuild.result}'",
+                body: "Project: ${env.JOB_NAME}<br/>" +
+                    "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                    "URL: ${env.BUILD_URL}<br/>",
+                to: 'kishore.kumar0728@gmail.com',                              
+                attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+        }
+    }
+}
