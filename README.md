@@ -122,7 +122,7 @@ mvn --version
 https://jfrog.com/download-jfrog-platform/
 https://jfrog.com/help/r/jfrog-installation-setup-documentation/install-artifactory-single-node-with-docker
 
-1) 
+1)
 sudo mkdir -p $JFROG_HOME/artifactory/var/etc/
 cd $JFROG_HOME/artifactory/var/etc/
 sudo touch ./system.yaml
