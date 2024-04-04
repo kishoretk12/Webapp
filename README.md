@@ -13,6 +13,7 @@
 
 ### 1. main.tf
 ```terraform
+
 resource "aws_instance" "web" {
   ami                    = "ami-03f4878755434977f"      # change ami id for different region
   instance_type          = "t2.large"
