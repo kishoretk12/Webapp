@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: register-app
-        image: ashfaque9x/java-registration-app:latest
+        image: kishoretk12/java-registration-app:latest
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
