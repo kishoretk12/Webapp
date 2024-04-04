@@ -1,4 +1,4 @@
-# CI-CD-PROJECT-USING-TERRAFORM-JENKINS-SONARQUBE-TRIVY-JFROG-AMAZON-EKS-
+CI-CD-PROJECT-USING-TERRAFORM-JENKINS-SONARQUBE-TRIVY-JFROG-AMAZON-EKS
 Deploying webapp Application
 Repository -- https://bitbucket.org/vtechbox/registration-app/src/main/
 AWS CLI Download -- https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -183,6 +183,6 @@ git clone https://kishoretk12@bitbucket.org/myrepositoryproject/registration-app
 
 3) kubectl delete service/registerapp-service                     ///It will Delete the LoadBalancer service.Replace with your service name.
 
-4) eksctl delete cluster virtualtechbox-cluster --region ap-south-1     OR    eksctl delete cluster --region=ap-south-1 --name=virtualtechbox-cluster              ///Delete EKS Cluster.
+4) eksctl delete cluster kishore-cluster --region ap-south-1     OR    eksctl delete cluster --region=ap-south-1 --name kishore-cluster      ///Delete EKS Cluster.
 
 5) terraform destroy                         ///Delete EC2 Instance with below Terraform Command.
