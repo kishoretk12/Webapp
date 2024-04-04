@@ -17,7 +17,7 @@
 resource "aws_instance" "web" {
   ami                    = "ami-03f4878755434977f"      # change ami id for different region
   instance_type          = "t2.large"
-  key_name               = "Linux-VM-Key-6"              # change key name as per your setup
+  key_name               = "cicdkey"              # change key name as per your setup
   vpc_security_group_ids = [aws_security_group.Jenkins-VM-SG.id]
   user_data              = templatefile("./install.sh", {})
 
