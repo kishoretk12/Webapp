@@ -1,6 +1,6 @@
 CI-CD-PROJECT-USING-TERRAFORM-JENKINS-SONARQUBE-TRIVY-JFROG-AMAZON-EKS
 Deploying webapp Application
-Repository -- https://bitbucket.org/vtechbox/registration-app/src/main/
+Repository -- https://bitbucket.org/myrepositoryproject/registration-app/src/main/
 AWS CLI Download -- https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 VS Code Download -- https://code.visualstudio.com/download
 =========================================================================================================================================================================================================================================
